@@ -1,1 +1,0 @@
-pip install Flask pymongo bcrypt flask-cors
