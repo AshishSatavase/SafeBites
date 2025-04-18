@@ -44,7 +44,7 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post(" http://192.168.200.151:7000/login", {
+      const response = await axios.post("https://safebites-somw.onrender.com/login", {
         userId,password
     });
     if (response.status === 200) {

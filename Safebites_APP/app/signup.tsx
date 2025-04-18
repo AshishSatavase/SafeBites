@@ -47,7 +47,7 @@ const SignUp: React.FC = () => {
   const handleSignUp = async () => {
     setIsLoading(true); // Set loading to true
     try {
-      const response = await axios.post(" http://192.168.0.105:7000/register", {
+      const response = await axios.post("https://safebites-somw.onrender.com/register", {
         name,
         userId: username,
         age,  // Ensure age is a string if expected

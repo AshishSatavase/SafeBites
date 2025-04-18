@@ -145,7 +145,7 @@ const Scan = () => {
         userAllergies: userAllergies,
       };
   
-      const response = await fetch(`http://192.168.0.105:7000/scanproduct`, {
+      const response = await fetch(`https://safebites-somw.onrender.com/scanproduct`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
