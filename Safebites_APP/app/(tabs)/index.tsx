@@ -43,6 +43,26 @@ export default function Index() {
         </TouchableOpacity>
       </View>
 
+      {/* How It Works - Enhanced */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>How It Works</Text>
+        <View style={styles.stepsContainer}>
+          {[
+            "Scan or search for any food product",
+            "Get instant allergen analysis based on your profile",
+            "View detailed safety information",
+            "Make informed food choices"
+          ].map((step, index) => (
+            <View key={index} style={styles.stepCard}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>{index + 1}</Text>
+              </View>
+              <Text style={styles.stepText}>{step}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
       {/* Why Choose SafeBites - Vertical Layout */}
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Why Choose SafeBites?</Text>
@@ -50,18 +70,18 @@ export default function Index() {
           {[
             { 
               Icon: Shield, 
-              title: 'High Accuracy', 
-              description: 'Advanced allergen detection with proven accuracy' 
+              title: 'Safe & Reliable', 
+              description: 'Accurate allergen detection for your safety' 
             },
             { 
               Icon: Zap, 
-              title: 'Instant Results', 
-              description: 'Get allergen information in seconds' 
+              title: 'Quick & Easy', 
+              description: 'Instant results with just a scan' 
             },
             { 
               Icon: Microscope, 
-              title: 'Comprehensive Database', 
-              description: '170+ allergens covered in our database' 
+              title: 'Complete Coverage', 
+              description: 'Comprehensive allergen database' 
             },
           ].map((feature, index) => (
             <View key={index} style={styles.featureCard}>
@@ -77,26 +97,6 @@ export default function Index() {
         </View>
       </View>
 
-      {/* How It Works - Enhanced */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>How It Works</Text>
-        <View style={styles.stepsContainer}>
-          {[
-            "Scan the product or enter the product name",
-            "Our algorithm analyzes your scanned product and your allergies",
-            "Get allergen results instantly",
-            "View detailed allergen information"
-          ].map((step, index) => (
-            <View key={index} style={styles.stepCard}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>{index + 1}</Text>
-              </View>
-              <Text style={styles.stepText}>{step}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
       {/* Call to Action */}
       <LinearGradient
         colors={['#2563EB', '#1E40AF']}
@@ -106,7 +106,7 @@ export default function Index() {
         <Text style={styles.ctaSubtitle}>Start scanning products now to ensure they're safe for you</Text>
         <TouchableOpacity 
           style={styles.ctaButton}
-          onPress={() => router.push('/scan')}
+          onPress={() => router.push('/searchBar')}
         >
           <Text style={styles.ctaButtonText}>Get Started</Text>
         </TouchableOpacity>

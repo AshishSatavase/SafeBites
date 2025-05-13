@@ -126,13 +126,7 @@ const Profile = () => {
           >
             <View style={styles.headerTop}>
               <Text style={styles.headerTitle}>Allergy Detection Profile</Text>
-              <TouchableOpacity 
-                style={styles.editButton}
-                onPress={() => setIsEditing(true)}
-              >
-                <Ionicons name="pencil" size={20} color="white" />
-                <Text style={styles.editButtonText}>Edit Profile</Text>
-              </TouchableOpacity>
+             
             </View>
             
             <View style={styles.profileSection}>
@@ -176,7 +170,19 @@ const Profile = () => {
                 <Ionicons name="restaurant" size={24} color="#2563EB" />
                 <Text style={styles.cardTitle}>Dietary Preferences</Text>
               </View>
-              <Text style={styles.cardContent}>{user.dietPreference}</Text>
+              <View style={styles.dietPreferenceDisplay}>
+                {user.dietPreference === 'veg' ? (
+                  <View style={styles.dietIndicator}>
+                    <View style={[styles.dietDot, styles.vegDot]} />
+                    <Text style={styles.dietText}>Veg</Text>
+                  </View>
+                ) : (
+                  <View style={styles.dietIndicator}>
+                    <View style={[styles.dietDot, styles.nonVegDot]} />
+                    <Text style={styles.dietText}>Non-Veg</Text>
+                  </View>
+                )}
+              </View>
             </View>
 
             {/* Allergies */}
@@ -204,6 +210,20 @@ const Profile = () => {
                 Always scan products before consumption and keep your allergy profile updated.
               </Text>
             </View>
+
+            {/* Edit Profile Button */}
+            <TouchableOpacity 
+              style={styles.editProfileButton}
+              onPress={() => setIsEditing(true)}
+            >
+              <LinearGradient
+                colors={['#60A5FA', '#3B82F6']}
+                style={styles.editProfileGradient}
+              >
+                <Ionicons name="pencil" size={24} color="white" />
+                <Text style={styles.editProfileText}>Edit Profile</Text>
+              </LinearGradient>
+            </TouchableOpacity>
 
             {/* Enhanced Logout Button */}
             <TouchableOpacity onPress={logout} style={styles.logoutButton}>
@@ -382,7 +402,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     color: '#E0F2FE',
-    marginBottom: 20,
     fontFamily: 'Fredoka-Medium',
   },
   headerTop: {
@@ -671,6 +690,63 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: 'Fredoka-Bold',
+  },
+  dietPreferenceDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  dietIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  dietDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  vegDot: {
+    backgroundColor: '#22C55E',
+  },
+  nonVegDot: {
+    backgroundColor: '#EF4444',
+  },
+  dietText: {
+    fontSize: 16,
+    color: '#1E40AF',
+    fontFamily: 'Fredoka-Medium',
+  },
+  editProfileButton: {
+    marginTop: 20,
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  editProfileGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  editProfileText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 12,
     fontFamily: 'Fredoka-Bold',
   },
 });
