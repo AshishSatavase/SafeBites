@@ -259,6 +259,50 @@ def recommend():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@app.route("/updateprofile", methods=["PUT"])
+def update_profile():
+    data = request.json
+    required_fields = ["userId", "name", "age", "allergy", "dietPreference"]
+    
+    # Validate input fields
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"status": "error", "message": f"Missing field: {field}"}), 400
+    
+    # Find user by userId
+    user = user_collection.find_one({"userId": data["userId"]})
+    if not user:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
+    # Update user document
+    update_data = {
+        "name": data["name"],
+        "age": data["age"],
+        "allergy": data["allergy"],
+        "dietPreference": data["dietPreference"]
+    }
+
+    # Update in DB
+    user_collection.update_one(
+        {"userId": data["userId"]},
+        {"$set": update_data}
+    )
+
+    # Return success response with updated user data
+    response_data = {
+        "status": "ok",
+        "message": "Profile Updated Successfully",
+        "user": {
+            "userId": data["userId"],
+            "name": data["name"],
+            "age": data["age"],
+            "allergy": data["allergy"],
+            "dietPreference": data["dietPreference"]
+        }
+    }
+    
+    return jsonify(response_data), 200
+
 # Start the Server
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=7000, debug=True)

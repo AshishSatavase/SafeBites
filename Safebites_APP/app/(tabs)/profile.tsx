@@ -1,21 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet, Modal, TextInput, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SimpleLineIcons, MaterialIcons, Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCustomFonts } from '../fonts';
+import axios from 'axios';
+
+const ALLERGIES = [
+  { label: "Milk", value: "Milk" },
+  { label: "Egg", value: "Egg" },
+  { label: "Peanuts", value: "Nut" },
+  { label: "Fish", value: "Fish" },
+  { label: "Crustacean", value: "Crustacean" },
+  { label: "Soy", value: "Soy" },
+  { label: "Sulphite", value: "Sulphite" },
+];
 
 interface User {
   name: string;
   age: string;
   allergy: string;
   dietPreference: string;
+  userId: string;
 }
 
 const Profile = () => {
   const fontsLoaded = useCustomFonts();
   const [user, setUserData] = useState<User | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editedAge, setEditedAge] = useState('');
+  const [editedDietPreference, setEditedDietPreference] = useState<'veg' | 'nonveg'>('veg');
+  const [selectedAllergies, setSelectedAllergies] = useState<string[]>([]);
+  const [showAllergyModal, setShowAllergyModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getUserData = async () => {
     try {
@@ -23,9 +42,51 @@ const Profile = () => {
       if (token) {
         const user = JSON.parse(token);
         setUserData(user);
+        setEditedName(user.name);
+        setEditedAge(user.age);
+        setEditedDietPreference(user.dietPreference);
+        setSelectedAllergies(user.allergy.split(',').map((a: string) => a.trim()));
       }
     } catch (error) {
       console.error("Error retrieving user data:", error);
+    }
+  };
+
+  const handleAllergySelect = (allergy: string) => {
+    if (!selectedAllergies.includes(allergy)) {
+      setSelectedAllergies([...selectedAllergies, allergy]);
+    }
+    setShowAllergyModal(false);
+  };
+
+  const handleAllergyRemove = (allergyToRemove: string) => {
+    setSelectedAllergies(selectedAllergies.filter(allergy => allergy !== allergyToRemove));
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await axios.put("https://safebites-somw.onrender.com/updateprofile", {
+        userId: user.userId,
+        name: editedName,
+        age: editedAge,
+        allergy: selectedAllergies.join(", "),
+        dietPreference: editedDietPreference
+      });
+
+      if (response.status === 200 && response.data.status === "ok") {
+        await AsyncStorage.setItem("token", JSON.stringify(response.data.user));
+        setUserData(response.data.user);
+        setIsEditing(false);
+        alert("Profile updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,12 +120,20 @@ const Profile = () => {
     <ScrollView style={styles.container}>
       {user ? (
         <>
-          {/* Enhanced Header with Gradient */}
           <LinearGradient
             colors={['#60A5FA', '#3B82F6', '#2563EB']}
             style={styles.headerGradient}
           >
-            <Text style={styles.headerTitle}>Allergy Detection Profile</Text>
+            <View style={styles.headerTop}>
+              <Text style={styles.headerTitle}>Allergy Detection Profile</Text>
+              <TouchableOpacity 
+                style={styles.editButton}
+                onPress={() => setIsEditing(true)}
+              >
+                <Ionicons name="pencil" size={20} color="white" />
+                <Text style={styles.editButtonText}>Edit Profile</Text>
+              </TouchableOpacity>
+            </View>
             
             <View style={styles.profileSection}>
               <View style={styles.profileInfo}>
@@ -147,6 +216,146 @@ const Profile = () => {
               </LinearGradient>
             </TouchableOpacity>
           </View>
+
+          {/* Edit Profile Modal */}
+          <Modal
+            visible={isEditing}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setIsEditing(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Edit Profile</Text>
+                  <TouchableOpacity onPress={() => setIsEditing(false)}>
+                    <Ionicons name="close" size={24} color="#1E40AF" />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.modalBody}>
+                  {/* Name Input */}
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Name</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editedName}
+                      onChangeText={setEditedName}
+                      placeholder="Enter your name"
+                    />
+                  </View>
+
+                  {/* Age Input */}
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Age</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={editedAge}
+                      onChangeText={setEditedAge}
+                      placeholder="Enter your age"
+                      keyboardType="numeric"
+                    />
+                  </View>
+
+                  {/* Diet Preference */}
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Diet Preference</Text>
+                    <View style={styles.dietPreferenceContainer}>
+                      <TouchableOpacity
+                        style={[
+                          styles.dietButton,
+                          editedDietPreference === 'veg' && styles.dietButtonActive
+                        ]}
+                        onPress={() => setEditedDietPreference('veg')}
+                      >
+                        <Text style={[
+                          styles.dietButtonText,
+                          editedDietPreference === 'veg' && styles.dietButtonTextActive
+                        ]}>Veg</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.dietButton,
+                          editedDietPreference === 'nonveg' && styles.dietButtonActive
+                        ]}
+                        onPress={() => setEditedDietPreference('nonveg')}
+                      >
+                        <Text style={[
+                          styles.dietButtonText,
+                          editedDietPreference === 'nonveg' && styles.dietButtonTextActive
+                        ]}>Non-Veg</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Allergies Selection */}
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Allergies</Text>
+                    <TouchableOpacity
+                      style={styles.allergyButton}
+                      onPress={() => setShowAllergyModal(true)}
+                    >
+                      <Text style={styles.allergyButtonText}>Select Allergies</Text>
+                      <Ionicons name="chevron-down" size={20} color="#1E40AF" />
+                    </TouchableOpacity>
+
+                    <View style={styles.selectedAllergiesContainer}>
+                      {selectedAllergies.map((allergy) => (
+                        <View key={allergy} style={styles.allergyTag}>
+                          <Text style={styles.allergyText}>{allergy}</Text>
+                          <TouchableOpacity onPress={() => handleAllergyRemove(allergy)}>
+                            <Ionicons name="close-circle" size={16} color="#1E40AF" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Update Button */}
+                  <TouchableOpacity
+                    style={styles.updateButton}
+                    onPress={handleUpdateProfile}
+                    disabled={isLoading}
+                  >
+                    <Text style={styles.updateButtonText}>
+                      {isLoading ? "Updating..." : "Update Profile"}
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </View>
+
+            {/* Allergies Selection Modal */}
+            <Modal
+              visible={showAllergyModal}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => setShowAllergyModal(false)}
+            >
+              <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Select Allergies</Text>
+                    <TouchableOpacity onPress={() => setShowAllergyModal(false)}>
+                      <Ionicons name="close" size={24} color="#1E40AF" />
+                    </TouchableOpacity>
+                  </View>
+                  <FlatList
+                    data={ALLERGIES}
+                    keyExtractor={(item) => item.value}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.allergyOption}
+                        onPress={() => handleAllergySelect(item.value)}
+                      >
+                        <Text style={styles.allergyOptionText}>{item.label}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </View>
+            </Modal>
+          </Modal>
         </>
       ) : (
         <View style={styles.loadingContainer}>
@@ -174,6 +383,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#E0F2FE',
     marginBottom: 20,
+    fontFamily: 'Fredoka-Medium',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  editButtonText: {
+    color: 'white',
+    marginLeft: 6,
+    fontSize: 14,
     fontFamily: 'Fredoka-Medium',
   },
   profileSection: {
@@ -331,6 +560,118 @@ const styles = StyleSheet.create({
     color: '#2563EB',
     fontWeight: '500',
     fontFamily: 'Fredoka-Medium',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1E40AF',
+    fontFamily: 'Fredoka-Bold',
+  },
+  modalBody: {
+    maxHeight: '100%',
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    color: '#1E40AF',
+    marginBottom: 8,
+    fontFamily: 'Fredoka-Medium',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: 'Fredoka',
+  },
+  dietPreferenceContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dietButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    alignItems: 'center',
+  },
+  dietButtonActive: {
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+  },
+  dietButtonText: {
+    color: '#1E40AF',
+    fontSize: 16,
+    fontFamily: 'Fredoka-Medium',
+  },
+  dietButtonTextActive: {
+    color: 'white',
+  },
+  allergyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 10,
+    padding: 12,
+  },
+  allergyButtonText: {
+    color: '#1E40AF',
+    fontSize: 16,
+    fontFamily: 'Fredoka-Medium',
+  },
+  selectedAllergiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  allergyOption: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  allergyOptionText: {
+    fontSize: 16,
+    color: '#1E40AF',
+    fontFamily: 'Fredoka',
+  },
+  updateButton: {
+    backgroundColor: '#2563EB',
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  updateButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Fredoka-Bold',
   },
 });
 
